@@ -8,7 +8,7 @@ import pandas as pd
 app = Flask(__name__)
 
 model = joblib.load("model.pkl")
-scale = joblib.load("scale-2.pkl")
+scale = joblib.load("scale.pkl")
 
 
 @app.route("/")
@@ -29,13 +29,22 @@ def predict():
    age = request.form['8']
 
    rowDF= pd.DataFrame([pd.Series([pregnancies,glucose,bloodPressure,skinThickness,insulin,bmi,dpf,age])])
-   print(rowDF)
    rowDF_new = pd.DataFrame(scale.transform(rowDF))
+   print(rowDF_new)
+
+   #model prediction:
+   prediction = model.predict_proba(rowDF_new)
+   print(f"The predicted value is:{prediction}")
+   if prediction[0][1] >= 0.5:
+      valPred = round(prediction[0][1],3)
+      print(f"The Round val {valPred*100}%")
+      return render_template('result.html',pred=f'You have a chance of having diabetes.\n\nProbability of you being a diabetic is {valPred*100}%.\n\nAdvice : Exercise Regularly')
+   else:
+      valPred = round(prediction[0][0],3)
+      return render_template('result.html',pred=f'Congratulations!!!, You are in a Safe Zone.\n\n Probability of you being a non-diabetic is {valPred*100:.2f}%.\n\n Advice : Exercise Regularly and maintain like this..!')
 
 
-
-
-   return render_template('index.html')
+   return render_template('result.html')
   
 
 if __name__ == '__main__':
